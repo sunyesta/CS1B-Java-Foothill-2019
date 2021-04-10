@@ -1,0 +1,303 @@
+public class Foothill
+{
+   public static void main(String[] args)
+   {
+      CardQueue newQueue = new CardQueue();
+
+      // how do you get the parameters
+      newQueue.add(new Card('A', Card.Suit.clubs));
+      newQueue.add(new Card('5', Card.Suit.clubs));
+      newQueue.add(new Card('2', Card.Suit.clubs));
+      newQueue.add(new Card('3', Card.Suit.clubs));
+      newQueue.add(new Card('4', Card.Suit.clubs));
+
+      System.out.println(newQueue);
+
+      System.out.println("\nremoving nodes");
+
+      try
+      {
+
+         for (int i = 0; i < 10; i++)
+         {
+            System.out.println(newQueue.removeCard());
+         }
+      } catch (RuntimeException E)
+      {
+         System.out.println(E.getMessage());
+      }
+
+      System.out.println(newQueue);
+
+   }
+
+}
+
+class Card
+{
+   public enum Suit
+   {
+      clubs, diamonds, hearts, spades
+   };
+
+   // public static data
+   public static final char DEFAULT_VAL = 'Q';
+   public static final Suit DEFAULT_SUIT = Suit.hearts;
+
+   // private data
+   private char value;
+   private Suit suit;
+   private boolean errorFlag;
+
+   public Card(char value, Suit suit)
+   {
+      set(value, suit);
+   }
+
+   // not done
+   public Card()
+   {
+      this(DEFAULT_VAL, DEFAULT_SUIT);
+   }
+
+   public Card(Card card)
+   {
+      this(card.getValue(), card.getSuit());
+   }
+
+   public String toString()
+   {
+      if (errorFlag)
+      {
+         return "** illegal **";
+      }
+
+      return value + " of " + suit;
+   }
+
+   // mutator
+   public boolean set(char value, Suit suit)
+   {
+
+      if (isValid(value, suit))
+      {
+         this.value = value;
+         this.suit = suit;
+         errorFlag = false;
+      } else
+      {
+         this.value = DEFAULT_VAL;
+         this.suit = DEFAULT_SUIT;
+         errorFlag = true;
+      }
+
+      return errorFlag;
+   }
+
+   public Suit getSuit()
+   {
+      return suit;
+   }
+
+   public char getValue()
+   {
+      return value;
+   }
+
+   public boolean getErrorFlag()
+   {
+      return errorFlag;
+   }
+
+   public boolean equals(Card card)
+   {
+      if (suit == card.getSuit() && value == card.getValue()
+            && errorFlag == card.getErrorFlag())
+      {
+         return true;
+      }
+
+      return false;
+
+   }
+
+   // test for validity
+   private static boolean isValid(char value, Suit suit)
+   {
+      if (value == 'A' || value == 'K' || value == 'Q' || value == 'J'
+            || value == 'T' || (value >= '2' && value <= '9'))
+      {
+         return true;
+      } else
+      {
+         return false;
+      }
+
+   }
+
+}
+
+class CardQueue extends Queue
+{
+   public void add(Card card)
+   {
+      if (card == null)
+      {
+         return;
+      }
+      super.add(new CardNode(card));
+   }
+
+   public Card removeCard()
+   {
+      CardNode removedNode = (CardNode) remove();
+
+      return removedNode.getCardData();
+   }
+}
+
+class CardNode extends Node
+{
+   private Card cardData;
+
+   public CardNode(Card cardData)
+   {
+      super();
+      this.cardData = cardData;
+   }
+
+   public CardNode()
+   {
+      this(new Card());
+   }
+
+   public String toString()
+   {
+      // must call tostring?
+      return cardData.toString();
+   }
+
+   public Card getCardData()
+   {
+      return cardData;
+   }
+}
+
+class Queue
+{
+   protected Node newest;
+   protected Node oldest;
+
+   public Queue()
+   {
+      newest = null;
+      oldest = null;
+
+   }
+
+   public void add(Node newNode)
+   {
+
+      if (newNode == null)
+      {
+
+         return;
+      } else
+      {
+         if (oldest == null)
+         {
+            oldest = newNode;
+         }
+         // sets the reference to the previous node to the newest so now the new
+         // node is first
+         newNode.next = newest;
+         newest = newNode;
+      }
+   }
+
+   public Node remove()
+   {
+
+      if (newest == null)
+      {
+         QueueEmptyException();
+         return null;
+      }
+
+      if (newest.next == null)
+      {
+         Node result = newest;
+         newest = null;
+         return result;
+      }
+
+      Node temp = newest;
+      while (temp.next != null && temp.next.next != null)
+      {
+         temp = temp.next;
+      }
+
+      Node result = temp.next;
+      oldest = temp;
+      temp.next = null;
+      return result;
+   }
+
+   public String toString()
+   {
+
+      if (newest == null)
+      {
+         return "{}";
+      }
+
+      Node currentNode = newest;
+      // doesn't work without tostring
+      String queueString = currentNode.toString();
+      while (currentNode.next != null)
+      {
+
+         currentNode = currentNode.next;
+         queueString = currentNode + ", " + queueString;
+      }
+
+      queueString = "{ " + queueString + " }";
+
+      return queueString;
+   }
+
+   public void QueueEmptyException()
+   {
+      throw new RuntimeException("your queue is empty");
+   }
+
+}
+
+class Node
+{
+   // why does protected work in 'push' in queue
+   protected Node next;
+
+   public Node()
+   {
+      next = null;
+
+   }
+
+   public String toString()
+   {
+      return "generic node";
+   }
+}
+
+//---------------------------Output---------------------------
+//{ A of clubs, 5 of clubs, 2 of clubs, 3 of clubs, 4 of clubs }
+//
+//removing nodes
+//A of clubs
+//5 of clubs
+//2 of clubs
+//3 of clubs
+//4 of clubs
+//your queue is empty
+//{}

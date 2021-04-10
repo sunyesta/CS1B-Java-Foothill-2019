@@ -1,0 +1,604 @@
+public class Card
+{
+   public enum Suit
+   {
+      clubs, diamonds, hearts, spades
+   };
+
+   // public static data
+   public final static char DEFAULT_VAL = 'Q';
+   public final static Suit DEFAULT_SUIT = Suit.hearts;
+
+   // private data
+   private char value;
+   private Suit suit;
+   private boolean errorFlag;
+
+   public Card(char value, Suit suit)
+   {
+      set(value, suit);
+   }
+
+   // not done
+   public Card()
+   {
+      this(DEFAULT_VAL, DEFAULT_SUIT);
+   }
+
+   public Card(Card card)
+   {
+      this(card.getValue(), card.getSuit());
+   }
+
+   public String toString()
+   {
+      if (errorFlag)
+      {
+         return "** illegal **";
+      }
+
+      return value + " of " + suit;
+   }
+
+   // mutator
+   public boolean set(char value, Suit suit)
+   {
+
+      if (isValid(value, suit))
+      {
+         this.value = value;
+         this.suit = suit;
+         errorFlag = false;
+      } else
+      {
+         this.value = DEFAULT_VAL;
+         this.suit = DEFAULT_SUIT;
+         errorFlag = true;
+      }
+
+      return errorFlag;
+   }
+
+   public Suit getSuit()
+   {
+      return suit;
+   }
+
+   public char getValue()
+   {
+      return value;
+   }
+
+   public boolean getErrorFlag()
+   {
+      return errorFlag;
+   }
+
+   public boolean equals(Card card)
+   {
+      if (suit == card.getSuit() && value == card.getValue()
+            && errorFlag == card.getErrorFlag())
+      {
+         return true;
+      }
+
+      return false;
+
+   }
+
+   // test for validity
+   private static boolean isValid(char value, Suit suit)
+   {
+      if (value == 'A' || value == 'K' || value == 'Q' || value == 'J'
+            || value == 'T' || (value >= '2' && value <= '9'))
+      {
+         return true;
+      } else
+      {
+         return false;
+      }
+
+   }
+
+}
+
+
+
+public class Hand
+{
+   // public static data
+   public final int MAX_CARDS_PER_HAND = 50;
+
+   // private data
+   private Card[] myCards = new Card[MAX_CARDS_PER_HAND];
+   private int numCards = 0;
+
+   public Hand()
+   {
+
+   }
+
+   public void resetHand()
+   {
+      // re-allocation means creating a new array object
+      for (int i = 0; i < myCards.length; i++)
+      {
+         myCards[i] = null;
+      }
+   }
+
+   // look at directions
+   public boolean takeCard(Card card)
+   {
+      // System.out.println("Take card: 2NumCards: " + numCards);
+      if (numCards < MAX_CARDS_PER_HAND)
+      {
+         if (!card.getErrorFlag())
+         {
+            myCards[numCards] = new Card(card);
+            numCards++;
+            // System.out.println("numCards: " + numCards);
+         }
+         return true;
+      } else
+      {
+         return false;
+      }
+
+   }
+
+   public Card playCard()
+   {
+      if (numCards > 0)
+      {
+         Card referenceCard = myCards[numCards - 1];
+         myCards[numCards - 1] = null;
+         numCards--;
+         return referenceCard;
+      } else
+      {
+         return new Card('M', Card.Suit.hearts);
+      }
+
+   }
+
+   public String toString()
+   {
+      // System.out.println("NumCards: " + numCards);
+      String newString = "";
+      for (int i = 0; i < numCards; i++)
+      {
+         if (myCards[i] != null)
+         {
+            newString = newString + myCards[i] + ", ";
+         }
+
+      }
+
+      if (newString.length() >= 2)
+      {
+         newString = newString.substring(0, newString.length() - 2);
+      }
+
+      return "Hand =  ( " + newString + ")";
+   }
+
+   public int getNumCards()
+   {
+      return numCards;
+   }
+
+   public Card inspectCard(int k)
+   {
+      if (k >= MAX_CARDS_PER_HAND || myCards[k] == null)
+      {
+         return new Card('M', Card.Suit.hearts);
+      }
+
+      return myCards[k];
+   }
+
+}
+
+
+
+public class Deck
+{
+   // Private Static Class Constants
+   private final static int MAX_PACKS = 6;
+   private final static int MIN_PACKS = 1;
+   private final static int NUM_CARDS_PER_PACK = 52;
+   private final static int MAX_CARDS_PER_DECK = MAX_PACKS * NUM_CARDS_PER_PACK;
+   private final static int DEFAULT_NUM_PACKS = 1;
+
+   // Private Static Member Data
+
+   // does this go here or in the constructure
+   private static Card[] masterPack;
+   private static boolean firstTime = true;
+
+   // Private Member Data
+   private Card[] cards;
+   private int topCard = -1;
+   private int numPacks;
+
+   // not done
+   public Deck(int numPacks)
+   {
+
+      allocateMasterPack();
+      cards = new Card[MAX_CARDS_PER_DECK];
+
+      boolean success = init(numPacks);
+
+      if (!success)
+      {
+         init(DEFAULT_NUM_PACKS);
+      }
+
+   }
+
+   public Deck()
+   {
+      this(DEFAULT_NUM_PACKS);
+   }
+
+   public boolean init(int numPacks)
+   {
+
+      if (numPacks > MAX_PACKS || numPacks < MIN_PACKS)
+      {
+         return false;
+
+      } else
+      {
+         this.numPacks = numPacks;
+         for (int i = 0; i < cards.length; i++)
+         {
+            cards[i] = null;
+            topCard = -1;
+         }
+
+         for (int i = 0; i < numPacks; i++)
+         {
+            for (int j = 0; j < masterPack.length; j++)
+            {
+
+               cards[(i * NUM_CARDS_PER_PACK) + j] = masterPack[j];
+               topCard++;
+
+            }
+
+         }
+         return true;
+
+      }
+
+   }
+
+   public void shuffle()
+   {
+      for (int i = 0; i < topCard; i++)
+      {
+         // can you do this and will it change cards[i] or will it just change
+         // the 'currentCard'? Card currentCard = cards[i];
+         int randomInt = ((int) (Math.random() * (topCard)));
+
+         Card randomCard = cards[randomInt];
+         Card currentCard = cards[i];
+
+//         System.out.println("Old: " + "tempCard = " + randomCard
+//               + "  currentCard = " + currentCard);
+
+         cards[i] = randomCard;
+         cards[randomInt] = currentCard;
+
+//         System.out.println("New: " + "tempCard = " + randomCard
+//               + "  currentCard = " + currentCard);
+      }
+   }
+
+   public Card dealCard()
+   {
+      if (topCard <= -1)
+      {
+         return new Card('M', Card.Suit.hearts);
+      }
+      topCard--;
+
+      return new Card(cards[topCard]);
+   }
+
+   public int getTopCard()
+   {
+      return this.topCard;
+   }
+
+   public Card inspectCard(int k)
+   {
+      if (k < 0 || k >= topCard)
+      {
+         // error flag card
+         return new Card('M', Card.Suit.hearts);
+      } else
+      {
+         return new Card(cards[k]);
+      }
+   }
+
+   private static void allocateMasterPack()
+   {
+      if (!firstTime)
+      {
+         return;
+      } else
+      {
+         firstTime = false;
+
+         masterPack = new Card[NUM_CARDS_PER_PACK];
+         char[] cardValues = new char[]
+         { '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'K', 'Q', 'J' };
+
+         int offsetInMasterPack = 0;
+         for (int i = 0; i < Card.Suit.values().length; i++)
+         {
+            for (int j = 0; j < cardValues.length; j++)
+            {
+               if (offsetInMasterPack >= masterPack.length)
+               {
+                  return;
+               }
+               masterPack[offsetInMasterPack] = new Card(cardValues[j],
+                     Card.Suit.values()[i]);
+               offsetInMasterPack++;
+
+            }
+         }
+      }
+
+   }
+
+}
+
+
+import java.util.Scanner;
+
+public class Foothill
+{
+
+//   public static void main(String[] args)
+//   {
+//      // deck 1
+//
+//      System.out.println("Deck 1 (2 packs)");
+//      performFunction(2);
+//
+//      System.out.println("\n\n\n\nDeck 2 (1 pack)");
+//      performFunction(1);
+//   }
+
+   public static void performFunction(int packs)
+   {
+      Deck deck = new Deck(packs);
+
+      while (deck.getTopCard() > 0)
+      {
+         System.out.print(deck.dealCard() + " / ");
+      }
+
+      System.out.print("\n\n\n");
+
+      deck.init(packs);
+      deck.shuffle();
+
+      while (deck.getTopCard() > 0)
+      {
+         System.out.print(deck.dealCard() + " / ");
+      }
+   }
+
+   public static void main(String[] args)
+   {
+      Scanner scanner = new Scanner(System.in);
+
+      final int MAX_HANDS = 10;
+      final int MIN_HANDS = 2;
+
+      final int packs = 1;
+
+      Deck deck = new Deck(packs);
+
+      Hand[] hands = new Hand[MAX_HANDS];
+
+      int numHands = 0;
+      while (numHands < MIN_HANDS || numHands > MAX_HANDS)
+      {
+         System.out.println("select the number of players (2-10):");
+         try
+         {
+            numHands = Integer.parseInt(scanner.next());
+         } catch (NumberFormatException | NullPointerException nfe)
+         {
+         }
+
+      }
+
+      // creates new hands
+      for (int i = 0; i < numHands; i++)
+      {
+         hands[i] = new Hand();
+      }
+      printHands(hands, numHands);
+      dealCards(numHands, hands, deck);
+
+      System.out.println("\nAfter getting cards:");
+      printHands(hands, numHands);
+
+      System.out.println("\nAfter shuffling cards:");
+
+      deck.init(packs);
+      deck.shuffle();
+      resetHands(hands, numHands);
+
+      dealCards(numHands, hands, deck);
+
+      printHands(hands, numHands);
+
+   }
+
+   private static void dealCards(int numHands, Hand[] hands, Deck deck)
+   {
+      int handIndex = 0;
+
+      for (int i = 0; i < deck.getTopCard(); i++)
+      {
+         boolean success = hands[handIndex].takeCard(deck.dealCard());
+         if (!success)
+         {
+            System.out.println("Could not take the card!");
+         }
+         handIndex++;
+         if (handIndex >= numHands)
+         {
+            handIndex = 0;
+         }
+      }
+   }
+
+   private static void printHands(Hand[] hands, int numHands)
+   {
+      for (int i = 0; i < numHands; i++)
+      {
+         System.out.println("#" + (i + 1) + ": " + hands[i]);
+         System.out.println();
+      }
+   }
+
+   public static void resetHands(Hand[] hands, int numHands)
+   {
+      for (int i = 0; i < numHands; i++)
+      {
+         hands[i].resetHand();
+      }
+   }
+}
+
+/*
+ * -------------------------------Run 1----------------------------------------
+ * Deck 1 (2 packs) Q of spades / K of spades / A of spades / 9 of spades / 8 of
+ * spades / 7 of spade s / 6 of spades / 5 of spades / 4 of spades / 3 of spades
+ * / 2 of spades / Q of h earts / J of hearts / Q of hearts / K of hearts / A of
+ * hearts / 9 of hearts / 8 of hearts / 7 of hearts / 6 of hearts / 5 of hearts
+ * / 4 of hearts / 3 of hearts / 2 of hearts / Q of hearts / J of diamonds / Q
+ * of diamonds / K of diamonds / A of diamonds / 9 of diamonds / 8 of diamonds /
+ * 7 of diamonds / 6 of diamonds / 5 of diamonds / 4 of diamonds / 3 of diamonds
+ * / 2 of diamonds / Q of hearts / J of clubs / Q of clubs / K of clubs / A of
+ * clubs / 9 of clubs / 8 of clubs / 7 of c lubs / 6 of clubs / 5 of clubs / 4
+ * of clubs / 3 of clubs / 2 of clubs / Q of hea rts / J of spades / Q of spades
+ * / K of spades / A of spades / 9 of spades / 8 of spades / 7 of spades / 6 of
+ * spades / 5 of spades / 4 of spades / 3 of spades / 2 of spades / Q of hearts
+ * / J of hearts / Q of hearts / K of hearts / A of heart s / 9 of hearts / 8 of
+ * hearts / 7 of hearts / 6 of hearts / 5 of hearts / 4 of h earts / 3 of hearts
+ * / 2 of hearts / Q of hearts / J of diamonds / Q of diamonds / K of diamonds /
+ * A of diamonds / 9 of diamonds / 8 of diamonds / 7 of diamonds / 6 of diamonds
+ * / 5 of diamonds / 4 of diamonds / 3 of diamonds / 2 of diamonds / Q of hearts
+ * / J of clubs / Q of clubs / K of clubs / A of clubs / 9 of clubs / 8 of clubs
+ * / 7 of clubs / 6 of clubs / 5 of clubs / 4 of clubs / 3 of clubs / 2 of clubs
+ * / Q of hearts /
+ * 
+ * 
+ * 4 of clubs / 2 of diamonds / J of diamonds / Q of hearts / 6 of hearts / 8 of
+ * sp ades / K of spades / K of hearts / 2 of diamonds / 6 of hearts / 2 of
+ * clubs / J of clubs / Q of hearts / K of spades / Q of spades / A of diamonds
+ * / 7 of spades / 6 of diamonds / 4 of spades / 3 of hearts / Q of clubs / 3 of
+ * diamonds / 6 of diamonds / J of hearts / K of hearts / J of diamonds / A of
+ * spades / 9 of diamo nds / 8 of hearts / 8 of spades / 4 of hearts / Q of
+ * hearts / 2 of hearts / 6 of clubs / 3 of clubs / 7 of diamonds / Q of hearts
+ * / 9 of spades / 5 of diamonds / 9 of hearts / 4 of hearts / 8 of diamonds / 9
+ * of diamonds / 9 of clubs / 8 of clubs / Q of hearts / 7 of hearts / 2 of
+ * spades / A of diamonds / 5 of clubs / 2 of hearts / K of diamonds / 3 of
+ * spades / Q of diamonds / 7 of clubs / 6 of spa des / Q of hearts / 5 of
+ * hearts / 5 of diamonds / 4 of diamonds / 9 of clubs / Q of hearts / K of
+ * diamonds / 4 of clubs / 2 of spades / 8 of diamonds / Q of clu bs / Q of
+ * hearts / 5 of spades / 3 of hearts / 6 of clubs / 2 of clubs / Q of di amonds
+ * / 8 of hearts / 7 of diamonds / 4 of spades / A of clubs / 5 of hearts / J of
+ * hearts / 5 of spades / A of clubs / 6 of spades / A of hearts / A of hearts /
+ * 3 of clubs / Q of hearts / 7 of hearts / J of clubs / 5 of clubs / 9 of heart
+ * s / Q of hearts / Q of spades / 3 of spades / 8 of clubs / 3 of diamonds / K
+ * of clubs / A of spades / 4 of diamonds / 7 of clubs / K of clubs / 7 of
+ * spades / J of spades / 9 of spades /
+ * 
+ * 
+ * 
+ * Deck 2 (1 pack) Q of spades / K of spades / A of spades / 9 of spades / 8 of
+ * spades / 7 of spade s / 6 of spades / 5 of spades / 4 of spades / 3 of spades
+ * / 2 of spades / Q of h earts / J of hearts / Q of hearts / K of hearts / A of
+ * hearts / 9 of hearts / 8 of hearts / 7 of hearts / 6 of hearts / 5 of hearts
+ * / 4 of hearts / 3 of hearts / 2 of hearts / Q of hearts / J of diamonds / Q
+ * of diamonds / K of diamonds / A of diamonds / 9 of diamonds / 8 of diamonds /
+ * 7 of diamonds / 6 of diamonds / 5 of diamonds / 4 of diamonds / 3 of diamonds
+ * / 2 of diamonds / Q of hearts / J of clubs / Q of clubs / K of clubs / A of
+ * clubs / 9 of clubs / 8 of clubs / 7 of c lubs / 6 of clubs / 5 of clubs / 4
+ * of clubs / 3 of clubs / 2 of clubs / Q of hea rts /
+ * 
+ * 
+ * 3 of clubs / 6 of hearts / Q of hearts / 3 of hearts / 6 of spades / 3 of
+ * spades / 7 of spades / J of clubs / Q of clubs / 2 of hearts / J of diamonds
+ * / 7 of he arts / 4 of hearts / A of hearts / 9 of hearts / 8 of diamonds / Q
+ * of hearts / K of clubs / 5 of hearts / 8 of clubs / 2 of clubs / K of
+ * diamonds / K of hearts / 9 of spades / 6 of clubs / J of hearts / 8 of spades
+ * / A of diamonds / Q of di amonds / Q of hearts / A of spades / A of clubs / 9
+ * of diamonds / 6 of diamonds / Q of hearts / 2 of spades / 7 of diamonds / 2
+ * of diamonds / 5 of diamonds / 5 of clubs / Q of spades / 4 of spades / K of
+ * spades / 4 of clubs / 3 of diamonds / 5 of spades / 4 of diamonds / 7 of
+ * clubs / 9 of clubs / 8 of hearts / Q of hea rts /
+ * -----------------------------------------------------------------------------
+ * -
+ */
+
+/*-------------------------------Run 2----------------------------------------
+select the number of players (2-10):
+6
+#1: Hand =  ( )
+
+#2: Hand =  ( )
+
+#3: Hand =  ( )
+
+#4: Hand =  ( )
+
+#5: Hand =  ( )
+
+#6: Hand =  ( )
+
+
+After getting cards:
+#1: Hand =  ( Q of spades, 6 of spades, J of hearts, 7 of hearts, Q of hearts)
+
+#2: Hand =  ( K of spades, 5 of spades, Q of hearts, 6 of hearts, J of diamonds)
+
+#3: Hand =  ( A of spades, 4 of spades, K of hearts, 5 of hearts)
+
+#4: Hand =  ( 9 of spades, 3 of spades, A of hearts, 4 of hearts)
+
+#5: Hand =  ( 8 of spades, 2 of spades, 9 of hearts, 3 of hearts)
+
+#6: Hand =  ( 7 of spades, Q of hearts, 8 of hearts, 2 of hearts)
+
+
+After shuffling cards:
+#1: Hand =  ( 4 of hearts, K of diamonds, 9 of diamonds, Q of diamonds, 3 of clu
+bs)
+
+#2: Hand =  ( 2 of hearts, 3 of hearts, 7 of clubs, Q of clubs, 7 of spades)
+
+#3: Hand =  ( 9 of spades, K of hearts, Q of hearts, 2 of clubs)
+
+#4: Hand =  ( 6 of diamonds, 3 of spades, 5 of spades, J of diamonds)
+
+#5: Hand =  ( A of clubs, 5 of diamonds, Q of hearts, J of clubs)
+
+#6: Hand =  ( K of spades, 8 of clubs, Q of hearts, 4 of spades)
+
+
+------------------------------------------------------------------------------*/
